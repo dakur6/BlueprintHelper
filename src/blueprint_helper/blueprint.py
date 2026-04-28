@@ -35,19 +35,19 @@ class BlueprintDataException(Exception):
 
 
 class Point:
-    def __init__(self, x: int|float, y: int|float, z: int|float, id: int = -1):
+    def __init__(self, x: (int | float), y: (int | float), z: (int | float), id: int = -1):
         self.x = x
         self.y = y
         self.z = z
         self.id = id
 
-    def get_x(self) -> int|float:
+    def get_x(self) -> (int | float):
         return self.x
     
-    def get_y(self) -> int|float:
+    def get_y(self) -> (int | float):
         return self.y
     
-    def get_y(self) -> int|float:
+    def get_y(self) -> (int | float):
         return self.y
     
     def get_id(self) -> int:
@@ -101,15 +101,7 @@ class Mesh:
         self._min_y = round(min(vertices[1::3]) * 1000, 1)
         self._min_z = round(min(vertices[2::3]) * 1000, 1)
 
-        self._vertices = {}
-        for i in range(0, int(vertices_count / 3)):
-            self._vertices[i] = Point(
-                round(vertices[i] * 1000, 1), 
-                round(vertices[i + 1] * 1000, 1), 
-                round(vertices[i + 2] * 1000, 1), 
-                i
-            )
-
+        self._vertices = vertices
         self._edges = edges
         
         self._faces = []
@@ -128,8 +120,16 @@ class Mesh:
         self.major_version = major_version
         self.minor_version = minor_version
     
-    def get_vertices(self) -> Dict[int, Point]:
+    def get_vertices(self) -> list[float]:
         return self._vertices
+    
+    def get_vertex(self, vertex_index: int) -> (Point | bool):
+        if(vertex_index > len(self._vertices) / 3):
+            return False
+        x = round(self._vertices[vertex_index] * 1000)
+        y = round(self._vertices[vertex_index + 1] * 1000)
+        z = round(self._vertices[vertex_index + 2] * 1000)
+        return Point(x, y, z, vertex_index)
     
     def get_edges(self, as_vertices: bool = False) -> list[int]:
         if as_vertices:
@@ -147,10 +147,10 @@ class Mesh:
         return self._faces
     
     def get_vertex_count(self) -> int:
-        return len(self._vertices)
+        return int(len(self._vertices) / 3)
     
     def get_edges_count(self) -> int:
-        return len(self._edges)
+        return int(len(self._edges) / 2)
     
     def get_faces_count(self) -> int:
         return len(self._faces)
@@ -201,42 +201,9 @@ class StructureInfo:
     
 
 class Structure:
-    def __init__(self, filepath: str):
-        try:
-            with open(filepath, 'r', encoding='utf-8') as file:
-                data = json.load(file)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Файл '{filepath}' не найден")
-        except json.JSONDecodeError as e:
-            raise json.JSONDecodeError(f"Ошибка при загрузке данный файла '{filepath}'", e.doc, e.pos)
-
-        for parameter in [KEY_VERSION, KEY_NAME, KEY_SMOOTH_ANGLE, KEY_GRID_SIZE, KEY_FORMAT, KEY_MESH, KEY_RIVETS]:
-            if parameter not in data:
-                raise BlueprintDataException(f"Отсутствует параметр: '{parameter}'")
-            
-        self._info = StructureInfo(
-            data[KEY_VERSION], 
-            data[KEY_NAME], 
-            data[KEY_SMOOTH_ANGLE], 
-            data[KEY_GRID_SIZE], 
-            data[KEY_FORMAT]
-        )
-            
-        mesh_data = data.get(KEY_MESH, {})
-        if not isinstance(mesh_data, dict):
-            raise ValueError(f"Параметр '{KEY_MESH}' не соответствует типу данных 'object' (JSON)")
-        
-        for parameter in [KEY_MESH_MAJOR_VERSION, KEY_MESH_MINOR_VERSION, KEY_MESH_VERTICES, KEY_MESH_EDGES, KEY_MESH_FACES]:
-            if parameter not in mesh_data:
-                raise ValueError(f"Отсутствует параметр '{parameter}' в данных параметра '{KEY_MESH}'")
-            
-        self._mesh = Mesh(
-            mesh_data[KEY_MESH_VERTICES], 
-            mesh_data[KEY_MESH_EDGES], 
-            mesh_data[KEY_MESH_FACES], 
-            mesh_data[KEY_MESH_MAJOR_VERSION], 
-            mesh_data[KEY_MESH_MINOR_VERSION]
-        )
+    def __init__(self, info: StructureInfo, mesh: Mesh):
+        self._info = info
+        self._mesh = mesh
 
     def get_info(self) -> StructureInfo:
         return self._info
@@ -246,4 +213,40 @@ class Structure:
         
     
 def load(filepath: str) -> Structure:
-    return Structure(filepath)
+    try:
+        with open(filepath, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Файл '{filepath}' не найден")
+    except json.JSONDecodeError as e:
+        raise json.JSONDecodeError(f"Ошибка при загрузке данный файла '{filepath}'", e.doc, e.pos)
+
+    for parameter in [KEY_VERSION, KEY_NAME, KEY_SMOOTH_ANGLE, KEY_GRID_SIZE, KEY_FORMAT, KEY_MESH, KEY_RIVETS]:
+        if parameter not in data:
+            raise BlueprintDataException(f"Отсутствует параметр: '{parameter}'")
+            
+    info = StructureInfo(
+        data[KEY_VERSION], 
+        data[KEY_NAME], 
+        data[KEY_SMOOTH_ANGLE], 
+        data[KEY_GRID_SIZE], 
+        data[KEY_FORMAT]
+    )
+            
+    mesh_data = data.get(KEY_MESH, {})
+    if not isinstance(mesh_data, dict):
+        raise ValueError(f"Параметр '{KEY_MESH}' не соответствует типу данных 'object' (JSON)")
+        
+    for parameter in [KEY_MESH_MAJOR_VERSION, KEY_MESH_MINOR_VERSION, KEY_MESH_VERTICES, KEY_MESH_EDGES, KEY_MESH_FACES]:
+        if parameter not in mesh_data:
+            raise ValueError(f"Отсутствует параметр '{parameter}' в данных параметра '{KEY_MESH}'")
+            
+    mesh = Mesh(
+        mesh_data[KEY_MESH_VERTICES], 
+        mesh_data[KEY_MESH_EDGES], 
+        mesh_data[KEY_MESH_FACES], 
+        mesh_data[KEY_MESH_MAJOR_VERSION], 
+        mesh_data[KEY_MESH_MINOR_VERSION]
+    )
+
+    return Structure(info, mesh)
