@@ -1,0 +1,28 @@
+KEY_VERSION = "v"
+KEY_NAME = "name"
+KEY_SMOOTH_ANGLE = "smoothAngle"
+KEY_GRID_SIZE = "gridSize"
+KEY_FORMAT = "format"
+KEY_MESH = "mesh"
+KEY_RIVETS = "rivets"
+
+KEY_MESH_MAJOR_VERSION = "majorVersion"
+KEY_MESH_MINOR_VERSION = "minorVersion"
+KEY_MESH_VERTICES = "vertices"
+KEY_MESH_EDGES = "edges"
+KEY_MESH_EDGE_FLAGS = "edgeFlags"
+KEY_MESH_FACES = "faces"
+
+KEY_FACES_VERTEX_INDICES = "v"
+KEY_FACES_THICKNESSES = "t"
+KEY_FACES_BITMASK = "tm"
+KEY_FACES_TE = "te"
+
+KEY_RIVETS_PROFILES = "profiles"
+KEY_RIVETS_NODES = "nodes"
+
+KEY_PROFILES_MODEL = "model"
+KEY_PROFILES_SPACING = "spacing"
+KEY_PROFILES_DIAMETER = "diameter"
+KEY_PROFILES_HEIGHT = "height"
+KEY_PROFILES_PADDING = "padding"
