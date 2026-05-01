@@ -25,21 +25,21 @@ class Structure:
         if version != other_version:
             raise StructureException(f"Версии структур не совпадают: {version} ≠ {other_version}")
         
-        self.__info.set_name(self.__info.get_name() + " (ОБЪЕДИНЁННЫЙ)")
-        self.__info.set_smooth_angle(min(self.__info.get_smooth_angle(), other.get_info().get_smooth_angle()))
+        name = self.__info.get_name()
+        joined_name_prefix = "  (ОБЪЕДИНЁННЫЙ)"
+        if not name.endswith(joined_name_prefix):
+            self.__info.set_name(name + joined_name_prefix)
+
+        self.__info.set_smooth_angle(max(self.__info.get_smooth_angle(), other.get_info().get_smooth_angle()))
         self.__info.set_grid_size(min(self.__info.get_grid_size(), other.get_info().get_grid_size()))
 
-        height_offset = 0
-        x_overlap = self.__mesh.get_min_x() < other.get_mesh().get_max_x() and self.__mesh.get_max_x() > other.get_mesh().get_min_x()
-        y_overlap = self.__mesh.get_min_y() < other.get_mesh().get_max_y() and self.__mesh.get_max_y() > other.get_mesh().get_min_y()
-        z_overlap = self.__mesh.get_min_z() < other.get_mesh().get_max_z() and self.__mesh.get_max_z() > other.get_mesh().get_min_z()
-
-        if x_overlap and y_overlap and z_overlap:
-            height_offset = self.__mesh.get_max_y() - other.get_mesh().get_min_y()
+        x_offset = self.__mesh.get_bounding_box().calculate_x_offset(other.get_mesh().get_bounding_box())
+        y_offset = self.__mesh.get_bounding_box().calculate_y_offset(other.get_mesh().get_bounding_box())
+        z_offset = self.__mesh.get_bounding_box().calculate_z_offset(other.get_mesh().get_bounding_box())
 
         replaced_vertex_indices = {}
         for vertex in other.get_mesh().get_vertices(True):
-            new_index = self.__mesh.add_vertex(vertex.add(0, height_offset, 0))
+            new_index = self.__mesh.add_vertex(vertex.add(x_offset, y_offset, z_offset))
             replaced_vertex_indices[vertex.get_id()] = new_index
 
         for edge in other.get_mesh().get_edges(True):

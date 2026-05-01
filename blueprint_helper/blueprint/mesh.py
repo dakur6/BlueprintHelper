@@ -1,6 +1,7 @@
 from typing import Dict, Any, Union, List
 from ._constants import *
 from .primitives import Point, Edge, Face
+from .bounding_box import BoundingBox
 from ._exceptions import MeshException
 
 class Mesh:
@@ -24,14 +25,14 @@ class Mesh:
         if len(faces) < 1:
             raise ValueError("Список граней (faces) не может быть пустым, должен содержать хотя бы один объект")
         
-        self.__max_x = round(max(vertices[0::3]) * 1000, 1)
-        self.__max_y = round(max(vertices[1::3]) * 1000, 1)
-        self.__max_z = round(max(vertices[2::3]) * 1000, 1)
-
-        self.__min_x = round(min(vertices[0::3]) * 1000, 1)
-        self.__min_y = round(min(vertices[1::3]) * 1000, 1)
-        self.__min_z = round(min(vertices[2::3]) * 1000, 1)
-
+        self.__bb = BoundingBox(
+            round(min(vertices[0::3]) * 1000, 1),
+            round(min(vertices[1::3]) * 1000, 1),
+            round(min(vertices[2::3]) * 1000, 1),
+            round(max(vertices[0::3]) * 1000, 1),
+            round(max(vertices[1::3]) * 1000, 1),
+            round(max(vertices[2::3]) * 1000, 1)
+        )
         self.__vertices = vertices
         self.__edges = edges
         self.__edge_flags = edge_flags
@@ -50,6 +51,9 @@ class Mesh:
     
     def get_minor_version(self) -> int:
         return self.__minor_version
+    
+    def get_bounding_box(self) -> BoundingBox:
+        return self.__bb
     
     def get_vertices(self, as_point: bool = False) -> Union[List[float], List[Point]]:
         if as_point:
@@ -110,29 +114,16 @@ class Mesh:
     def get_faces_count(self) -> int:
         return len(self.__faces)
     
-    def get_max_x(self) -> float:
-        return self.__max_x
-    
-    def get_max_y(self) -> float:
-        return self.__max_y
-    
-    def get_max_z(self) -> float:
-        return self.__max_z
-    
-    def get_min_x(self) -> float:
-        return self.__min_x
-    
-    def get_min_y(self) -> float:
-        return self.__min_y
-    
-    def get_min_z(self) -> float:
-        return self.__min_z
-    
     def add_vertex(self, vertex: Point) -> int:
-        self.__vertices.append(vertex.get_x() / 1000)
-        self.__vertices.append(vertex.get_y() / 1000)
-        self.__vertices.append(vertex.get_z() / 1000)
-        self.update_bounding_box(vertex)
+        x = vertex.get_x()
+        y = vertex.get_y()
+        z = vertex.get_z()
+        
+        self.__vertices.append(x/ 1000)
+        self.__vertices.append(y / 1000)
+        self.__vertices.append(z / 1000)
+
+        self.__bb.expand_to_include_point(x, y, z)
         return self.get_vertex_count() - 1
     
     def add_edge(self, edge: Edge) -> int:
@@ -163,29 +154,22 @@ class Mesh:
     def set_vertex(self, vertex_index, vertex: Point) -> bool:
         i = vertex_index * 3
         try:
-            self.__vertices[i] = vertex.get_x() / 1000
-            self.__vertices[i + 1] = vertex.get_y() / 1000
-            self.__vertices[i + 2] = vertex.get_z() / 1000
-            self.update_bounding_box(vertex)
+            x = vertex.get_x()
+            y = vertex.get_y()
+            z = vertex.get_z()
+
+            self.__vertices[i] = x / 1000
+            self.__vertices[i + 1] = y / 1000
+            self.__vertices[i + 2] = z / 1000
+
+            self.__bb.expand_to_include_point(x, y, z)
             return True
         except IndexError:
             raise ValueError(f"Индекс вершины {vertex_index} не существует (допустимый диапазон: 0–{self.get_vertex_count() - 1})")
 
-    def move(self, x_offset: float, y_offset: float, z_offset: float) -> None:
+    def offset(self, x: float, y: float, z: float) -> None:
         for i in range(self.get_vertex_count()):
-            self.__vertices[i] += x_offset / 1000
-            self.__vertices[i + 1] += y_offset / 1000
-            self.__vertices[i + 2] += z_offset / 1000
-
-    def update_bounding_box(self, vertex: Point) -> None:
-        x = vertex.get_x()
-        y = vertex.get_y()
-        z = vertex.get_z()
-
-        self.__min_x = min(self.__min_x, x)
-        self.__min_y = min(self.__min_y, y)
-        self.__min_z = min(self.__min_z, z)
-
-        self.__max_x = max(self.__max_x, x)
-        self.__max_y = max(self.__max_y, y)
-        self.__max_z = max(self.__max_z, z)
+            self.__vertices[i] += x / 1000
+            self.__vertices[i + 1] += y / 1000
+            self.__vertices[i + 2] += z / 1000
+        self.__bb.offset(x, y, z)
