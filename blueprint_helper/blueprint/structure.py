@@ -5,6 +5,8 @@ from .primitives import Edge, Face
 from ._exceptions import StructureException
 
 class Structure:
+    _JOINED_NAME_SUFFIX = "  (ОБЪЕДИНЁННЫЙ)"
+    
     def __init__(self, info: StructureInfo, mesh: Mesh, rivets: Dict[str, Any]) -> None:
         self.__info = info
         self.__mesh = mesh
@@ -25,10 +27,8 @@ class Structure:
         if version != other_version:
             raise StructureException(f"Версии структур не совпадают: {version} ≠ {other_version}")
         
-        name = self.__info.get_name()
-        joined_name_prefix = "  (ОБЪЕДИНЁННЫЙ)"
-        if not name.endswith(joined_name_prefix):
-            self.__info.set_name(name + joined_name_prefix)
+        if not (name := self.__info.get_name()).endswith(self._JOINED_NAME_SUFFIX):
+            self.__info.set_name(name + self._JOINED_NAME_SUFFIX)
 
         self.__info.set_smooth_angle(max(self.__info.get_smooth_angle(), other.get_info().get_smooth_angle()))
         self.__info.set_grid_size(min(self.__info.get_grid_size(), other.get_info().get_grid_size()))

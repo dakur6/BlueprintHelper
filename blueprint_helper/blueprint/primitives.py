@@ -45,10 +45,11 @@ class Point:
         return f"Point(x={self.x}, y={self.y}, z={self.z}, id={self.id})"
     
 class Edge:
-    def __init__(self, vertex1: int, vertex2: int, flag: int) -> None:
+    def __init__(self, vertex1: int, vertex2: int, flag: int, id: int = -1) -> None:
         self._vertex1 = vertex1
         self._vertex2 = vertex2
         self._flag = flag
+        self.__id = id
     
     def get_vertex1(self) -> int:
         return self._vertex1
@@ -59,8 +60,14 @@ class Edge:
     def get_flag(self) -> int:
         return self._flag
     
+    def get_id(self) -> int:
+        return self.__id
+    
+    def __str__(self):
+        return f"Edge(v1={self.get_vertex1()}, v2={self.get_vertex2()}, flag={self.get_flag()}, id={self.get_id()})"
+    
 class Face:
-    def __init__(self, vertex_indices: List[int], thicknesses: List[int], bitmask: int, te: int = 0) -> None:
+    def __init__(self, vertex_indices: List[int], thicknesses: List[int], bitmask: int, te: int, id: int = -1) -> None:
         vertex_indices_count = len(vertex_indices)
         if vertex_indices_count < 3 or vertex_indices_count > 4:
             raise ValueError(f"Список индексов вершин (vertex_indices) должен содержать от 3 до 4 индексов, получено {vertex_indices_count}")
@@ -73,6 +80,7 @@ class Face:
         self.__thicknesses = thicknesses
         self.__bitmask = bitmask
         self.__te = te
+        self.__id = id
 
     def get_vertex_indices(self) -> List[int]:
         return self.__vertex_indices
@@ -85,3 +93,6 @@ class Face:
     
     def get_te(self) -> int:
         return self.__te
+    
+    def get_id(self) -> int:
+        return self.__id

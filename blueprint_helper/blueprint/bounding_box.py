@@ -75,8 +75,8 @@ class BoundingBox:
         if other.min_x >= self.max_x:
             return 0.0
         
-        r_offset = self.min_x - other.max_x # Вправо
-        l_offset = self.max_x - other.min_x # Влево
+        r_offset = self.min_x - other.max_x
+        l_offset = self.max_x - other.min_x
 
         if abs(r_offset) < abs(l_offset):
             return r_offset if r_offset < 0 else r_offset
@@ -92,10 +92,10 @@ class BoundingBox:
         if other.min_y >= self.max_y:
             return 0.0
         
-        up_offset = self.min_y - other.max_y # Вверх
-        down_offset = self.max_y - other.min_y # Вниз
+        up_offset = self.min_y - other.max_y
+        down_offset = self.max_y - other.min_y
         
-        if down_offset < 0 and abs(down_offset) < abs(up_offset):
+        if abs(down_offset) < abs(up_offset):
             return down_offset
         elif up_offset < 0:
             return up_offset
@@ -109,8 +109,8 @@ class BoundingBox:
         if other.min_z >= self.max_z:
             return 0.0
         
-        f_offset = self.min_z - other.max_z # Вперед
-        b_offset = self.max_z - other.min_z # Назад
+        f_offset = self.min_z - other.max_z
+        b_offset = self.max_z - other.min_z
         
         if abs(f_offset) < abs(b_offset):
             return f_offset if f_offset < 0 else f_offset

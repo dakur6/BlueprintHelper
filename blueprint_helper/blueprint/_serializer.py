@@ -30,8 +30,7 @@ def load(filepath: str) -> Structure:
         data[KEY_FORMAT]
     )
             
-    mesh_data = data.get(KEY_MESH, {})
-    if not isinstance(mesh_data, dict):
+    if not isinstance((mesh_data := data.get(KEY_MESH, {})), dict):
         raise ValueError(f"Параметр '{KEY_MESH}' не соответствует типу данных 'object' (JSON)")
         
     for parameter in [KEY_MESH_MAJOR_VERSION, KEY_MESH_MINOR_VERSION, KEY_MESH_VERTICES, KEY_MESH_EDGES, KEY_MESH_FACES]:
@@ -53,8 +52,7 @@ def save(structure: Structure, filepath: str) -> None:
     if not filepath.endswith(".blueprint"):
         filepath += ".blueprint"
     
-    directory = os.path.dirname(filepath)
-    if directory and not os.path.exists(directory):
+    if (directory := os.path.dirname(filepath)) and not os.path.exists(directory):
         os.makedirs(directory)
 
     info = structure.get_info()

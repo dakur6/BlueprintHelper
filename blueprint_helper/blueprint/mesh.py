@@ -6,20 +6,16 @@ from ._exceptions import MeshException
 
 class Mesh:
     def __init__(self, vertices: List[float], edges: List[int], edge_flags: List[int], faces: List[Dict[str, Any]], major_version: int = 0, minor_version: int = 3) -> None:
-        vertex_count = len(vertices)
-        edges_count = len(edges)
-        edge_flags_count = len(edge_flags)
-
-        if vertex_count % 3 != 0:
+        if (vertex_count := len(vertices)) % 3 != 0:
             raise ValueError(f"Количество вершин (vertices) должно быть кратно 3, получено {vertex_count}")
 
-        if edges_count < 6:
+        if (edges_count := len(edges)) < 6:
             raise ValueError(f"Список рёбер (edges) должен содержать минимум 6 индексов вершин, получено {edges_count}")
 
         if edges_count % 2 != 0:
             raise ValueError(f"Количество индексов в списке рёбер (edges) должно быть чётным, получено {edges_count}")
 
-        if len(edge_flags) != edges_count // 2:
+        if (edge_flags_count := len(edge_flags)) != edges_count // 2:
             raise ValueError(f"Список флагов рёбер (edge_flags) должен содержать {edges_count // 2} значений (по числу рёбер), получено {edge_flags_count}")
 
         if len(faces) < 1:
@@ -65,6 +61,20 @@ class Mesh:
             return [edge for i in range(self.get_edges_count()) if (edge := self.get_edge(i))]
         return self.__edges
     
+    def get_edges_by_vertex(self, vertex_index: int) -> List[Edge]:
+        edges = []
+        for edge in self.get_edges(True):
+            if vertex_index == edge.get_vertex1() or vertex_index == edge.get_vertex2():
+                edges.append(edge)
+        return edges
+    
+    def get_faces_by_vertex(self, vertex_index: int) -> List[Face]:
+        faces = []
+        for face in self.get_faces(True):
+            if vertex_index in face.get_vertex_indices():
+                faces.append(face)
+        return faces
+    
     def get_edge_flags(self) -> List[int]:
         return self.__edge_flags
     
@@ -89,7 +99,7 @@ class Mesh:
             v1 = self.__edges[i]
             v2 = self.__edges[i + 1]
             flag = self.__edge_flags[edge_index]
-            return Edge(v1, v2, flag)
+            return Edge(v1, v2, flag, edge_index)
         except IndexError:
             return False
     
@@ -100,7 +110,8 @@ class Mesh:
                 face_data[KEY_FACES_VERTEX_INDICES], 
                 face_data[KEY_FACES_THICKNESSES], 
                 face_data[KEY_FACES_BITMASK], 
-                face_data[KEY_FACES_TE]
+                face_data[KEY_FACES_TE],
+                face_index
             )
         except IndexError:
             return False
@@ -151,7 +162,7 @@ class Mesh:
         })
         return self.get_faces_count() - 1
 
-    def set_vertex(self, vertex_index, vertex: Point) -> bool:
+    def set_vertex(self, vertex_index: int, vertex: Point) -> None:
         i = vertex_index * 3
         try:
             x = vertex.get_x()
@@ -163,9 +174,67 @@ class Mesh:
             self.__vertices[i + 2] = z / 1000
 
             self.__bb.expand_to_include_point(x, y, z)
-            return True
         except IndexError:
             raise ValueError(f"Индекс вершины {vertex_index} не существует (допустимый диапазон: 0–{self.get_vertex_count() - 1})")
+        
+    def remove_vertex(self, vertex_index: int) -> None:
+        for index, face in enumerate(self.__faces):
+            if vertex_index in face[KEY_FACES_VERTEX_INDICES]:
+                del self.__faces[index]
+
+        for edge_index in range(self.get_edges_count() - 1, -1, -1):
+            i = edge_index * 2
+            if self.__edges[i] == vertex_index or self.__edges[i + 1] == vertex_index:
+                del self.__edges[i + 1]
+                del self.__edges[i]
+                del self.__edge_flags[edge_index]
+
+        try:
+            i = vertex_index * 3
+            del self.__vertices[i + 2]
+            del self.__vertices[i + 1]
+            del self.__vertices[i]
+        except IndexError:
+            raise ValueError(f"Индекс вершины {vertex_index} не существует (допустимый диапазон: 0–{self.get_edges_count() - 1})")
+        
+        for i in range(self.get_vertex_count() - 1, vertex_index + 1, -1):
+            for face in self.get_faces_by_vertex(i):
+                vertices = [v - 1 for v in face.get_vertex_indices()]
+                self.__faces[face.get_id()] = {
+                    KEY_FACES_VERTEX_INDICES: vertices,
+                    KEY_FACES_THICKNESSES: face.get_thicknesses(),
+                    KEY_FACES_BITMASK: face.get_bitmask(),
+                    KEY_FACES_TE: face.get_te()
+                }
+            
+            for edge in self.get_edges_by_vertex(i):
+                j = edge.get_id() * 2
+                self.__edges[j] = edge.get_vertex1() - 1
+                self.__edges[j + 1] = edge.get_vertex2() - 1
+
+    def delete_independent_points(self) -> int:
+        removed_count = 0
+        for vertex_index in range(self.get_vertex_count() - 1, -1, -1):
+            if len(self.get_edges_by_vertex(vertex_index)) > 0 or len(self.get_faces_by_vertex(vertex_index)) > 0:
+                continue
+
+            i = vertex_index * 3
+            del self.__vertices[i + 2]
+            del self.__vertices[i + 1]
+            del self.__vertices[i]
+
+            for index, v in enumerate(self.__edges):
+                if v > vertex_index:
+                    self.__edges[index] = v - 1
+
+            for face_data in self.__faces:
+                for v_index, v in enumerate(face_data[KEY_FACES_VERTEX_INDICES]):
+                    if v > vertex_index:
+                        face_data[KEY_FACES_VERTEX_INDICES][v_index] = v - 1
+                        
+            removed_count += 1
+
+        return removed_count
 
     def offset(self, x: float, y: float, z: float) -> None:
         for i in range(self.get_vertex_count()):
