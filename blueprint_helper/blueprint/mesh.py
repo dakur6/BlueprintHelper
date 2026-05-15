@@ -1,8 +1,8 @@
-from typing import Dict, Any, Union, List
-from ._constants import *
-from .primitives import Point, Edge, Face
-from .bounding_box import BoundingBox
-from ._exceptions import MeshException
+from typing import overload, Dict, Any, Literal, Union, Optional, List
+from blueprint_helper.blueprint._constants import *
+from blueprint_helper.blueprint.primitives import Point, Edge, Face
+from blueprint_helper.blueprint.bounding_box import BoundingBox
+from blueprint_helper.blueprint._exceptions import MeshException
 
 class Mesh:
     def __init__(self, vertices: List[float], edges: List[int], edge_flags: List[int], faces: List[Dict[str, Any]], major_version: int = 0, minor_version: int = 3) -> None:
@@ -51,12 +51,24 @@ class Mesh:
     def get_bounding_box(self) -> BoundingBox:
         return self.__bb
     
-    def get_vertices(self, as_point: bool = False) -> Union[List[float], List[Point]]:
+    @overload
+    def get_vertices(self, as_point: Literal[True]) -> List[Point]: ...
+
+    @overload
+    def get_vertices(self, as_point: Literal[False]) -> List[float]: ...
+
+    def get_vertices(self, as_point: bool) -> Union[List[float], List[Point]]:
         if as_point:
             return [vertex for i in range(self.get_vertex_count()) if (vertex := self.get_vertex(i))]
         return self.__vertices
     
-    def get_edges(self, as_class: bool = False) -> Union[List[int], List[Edge]]:
+    @overload
+    def get_edges(self, as_class: Literal[True]) -> List[Edge]: ...
+
+    @overload
+    def get_edges(self, as_class: Literal[False]) -> List[int]: ...
+
+    def get_edges(self, as_class: bool) -> Union[List[int], List[Edge]]:
         if as_class:
             return [edge for i in range(self.get_edges_count()) if (edge := self.get_edge(i))]
         return self.__edges
@@ -78,12 +90,18 @@ class Mesh:
     def get_edge_flags(self) -> List[int]:
         return self.__edge_flags
     
-    def get_faces(self, as_class: bool = False) -> Union[Dict[str, Any], List[Face]]:
+    @overload
+    def get_faces(self, as_class: Literal[True]) -> List[Face]: ...
+
+    @overload
+    def get_faces(self, as_class: Literal[False]) -> List[Dict[str, Any]]: ...
+    
+    def get_faces(self, as_class: bool) -> Union[List[Dict[str, Any]], List[Face]]:
         if as_class:
             return [face for i in range(self.get_faces_count()) if (face := self.get_face(i))]
         return self.__faces
 
-    def get_vertex(self, vertex_index: int) -> Union[Point, bool]:
+    def get_vertex(self, vertex_index: int) -> Optional[Point]:
         i = vertex_index * 3
         try:
             x = round(self.__vertices[i] * 1000, 1)
@@ -91,9 +109,9 @@ class Mesh:
             z = round(self.__vertices[i + 2] * 1000, 1)
             return Point(x, y, z, vertex_index)
         except IndexError:
-            return False
+            return None
     
-    def get_edge(self, edge_index: int) -> Union[Edge,  bool]:
+    def get_edge(self, edge_index: int) -> Optional[Edge]:
         i = edge_index * 2
         try:
             v1 = self.__edges[i]
@@ -101,9 +119,9 @@ class Mesh:
             flag = self.__edge_flags[edge_index]
             return Edge(v1, v2, flag, edge_index)
         except IndexError:
-            return False
+            return None
     
-    def get_face(self, face_index: int) -> Union[Face, bool]:
+    def get_face(self, face_index: int) -> Optional[Face]:
         try:
             face_data = self.__faces[face_index]
             return Face(
@@ -114,7 +132,7 @@ class Mesh:
                 face_index
             )
         except IndexError:
-            return False
+            return None
     
     def get_vertex_count(self) -> int:
         return len(self.__vertices) // 3

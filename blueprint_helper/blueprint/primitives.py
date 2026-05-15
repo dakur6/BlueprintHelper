@@ -20,16 +20,16 @@ class Point:
     def get_id(self) -> int:
         return self.id
     
-    def add(self, x: float, y: float, z: float) -> Self:
+    def add(self, x: float, y: float, z: float) -> "Point":
         return Point(self.x + x, self.y + y, self.z + z, self.id)
     
-    def addPoint(self, p: Self) -> Self:
+    def addPoint(self, p: Self) -> "Point":
         return self.add(p.x, p.y, p.z)
     
-    def subtract(self, x: float, y: float, z: float) -> Self:
+    def subtract(self, x: float, y: float, z: float) -> "Point":
         return self.add(-x, -y, -z)
     
-    def subtractPoint(self, p: Self) -> Self:
+    def subtractPoint(self, p: Self) -> "Point":
         return self.add(-p.x, -p.y, -p.z)
     
     def distance(self, p: Self) -> float:

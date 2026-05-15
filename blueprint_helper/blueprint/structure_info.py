@@ -12,10 +12,10 @@ class StructureInfo:
     def get_name(self) -> str:
         return self.__name
     
-    def get_smooth_angle(self) -> str:
+    def get_smooth_angle(self) -> int:
         return self.__smooth_angle
     
-    def get_grid_size(self) -> str:
+    def get_grid_size(self) -> int:
         return self.__grid_size
     
     def get_format(self) -> str:
@@ -35,4 +35,4 @@ class StructureInfo:
         self.__grid_size = grid_size
     
     def __str__(self):
-        return f"StructureInfo(version=\"{self._version}\", name=\"{self._name}\", smooth_angle={self._smooth_angle}, grid_size={self._grid_size}, format=\"{self._format}\")"
+        return f"StructureInfo(version=\"{self.__version}\", name=\"{self.__name}\", smooth_angle={self.__smooth_angle}, grid_size={self.__grid_size}, format=\"{self.__format}\")"

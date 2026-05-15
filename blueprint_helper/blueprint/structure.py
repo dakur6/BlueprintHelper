@@ -1,8 +1,8 @@
 from typing import Dict, Any, Self
-from .structure_info import StructureInfo
-from .mesh import Mesh
-from .primitives import Edge, Face
-from ._exceptions import StructureException
+from blueprint_helper.blueprint.structure_info import StructureInfo
+from blueprint_helper.blueprint.mesh import Mesh
+from blueprint_helper.blueprint.primitives import Edge, Face
+from blueprint_helper.blueprint._exceptions import StructureException
 
 class Structure:
     _JOINED_NAME_SUFFIX = "  (ОБЪЕДИНЁННЫЙ)"

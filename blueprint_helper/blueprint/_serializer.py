@@ -1,10 +1,10 @@
 import json
 import os
-from .structure import Structure
-from .structure_info import StructureInfo
-from .mesh import Mesh
-from ._constants import *
-from ._exceptions import BlueprintDataException
+from blueprint_helper.blueprint.structure import Structure
+from blueprint_helper.blueprint.structure_info import StructureInfo
+from blueprint_helper.blueprint.mesh import Mesh
+from blueprint_helper.blueprint._constants import *
+from blueprint_helper.blueprint._exceptions import BlueprintDataException
 
 def load(filepath: str) -> Structure:
     if not filepath.endswith(".blueprint"):
@@ -68,10 +68,10 @@ def save(structure: Structure, filepath: str) -> None:
         KEY_MESH: {
             KEY_MESH_MAJOR_VERSION: mesh.get_major_version(),
             KEY_MESH_MINOR_VERSION: mesh.get_minor_version(),
-            KEY_MESH_VERTICES: mesh.get_vertices(),
-            KEY_MESH_EDGES: mesh.get_edges(),
+            KEY_MESH_VERTICES: mesh.get_vertices(False),
+            KEY_MESH_EDGES: mesh.get_edges(False),
             KEY_MESH_EDGE_FLAGS: mesh.get_edge_flags(),
-            KEY_MESH_FACES: mesh.get_faces()
+            KEY_MESH_FACES: mesh.get_faces(False)
         },
         KEY_RIVETS: rivets
     }

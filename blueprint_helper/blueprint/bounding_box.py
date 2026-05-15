@@ -1,5 +1,4 @@
 import copy
-from typing import Self
 
 class BoundingBox:
     def __init__(self, min_x: float, min_y: float, min_z: float, max_x: float, max_y: float, max_z: float) -> None:
@@ -18,7 +17,7 @@ class BoundingBox:
         self.max_y = max_y
         self.max_z = max_z
 
-    def add_coord(self, x: float, y: float, z: float) -> Self:
+    def add_coord(self, x: float, y: float, z: float) -> "BoundingBox":
         min_x = self.min_x
         min_y = self.min_y
         min_z = self.min_z
@@ -43,7 +42,7 @@ class BoundingBox:
 
         return BoundingBox(min_x, min_y, min_z, max_x, max_y, max_z)
     
-    def expand_to_include_point(self, x: float, y: float, z: float) -> Self:
+    def expand_to_include_point(self, x: float, y: float, z: float) -> "BoundingBox":
         self.min_x = min(self.min_x, x)
         self.min_y = min(self.min_y, y)
         self.min_z = min(self.min_z, z)
@@ -53,7 +52,7 @@ class BoundingBox:
 
         return self
     
-    def offset(self, x: float, y: float, z: float) -> Self:
+    def offset(self, x: float, y: float, z: float) -> "BoundingBox":
         self.min_x += x
         self.min_y += y
         self.min_z += z
@@ -63,10 +62,10 @@ class BoundingBox:
 
         return self
     
-    def offset_copy(self, x: float, y: float, z: float) -> Self:
+    def offset_copy(self, x: float, y: float, z: float) -> "BoundingBox":
         return copy.copy(self).offset(x, y, z)
     
-    def calculate_x_offset(self, other: Self) -> float:
+    def calculate_x_offset(self, other: "BoundingBox") -> float:
         if not self._intersects_yz(other):
             return 0.0
         
@@ -83,7 +82,7 @@ class BoundingBox:
         else:
             return l_offset if l_offset > 0 else l_offset
         
-    def calculate_y_offset(self, other: Self) -> float:
+    def calculate_y_offset(self, other: "BoundingBox") -> float:
         if not self._intersects_xz(other):
             return 0.0
         
@@ -100,7 +99,9 @@ class BoundingBox:
         elif up_offset < 0:
             return up_offset
         
-    def calculate_z_offset(self, other: Self) -> float:
+        return 0.0
+        
+    def calculate_z_offset(self, other: "BoundingBox") -> float:
         if not self._intersects_xy(other):
             return 0.0
         
@@ -117,19 +118,19 @@ class BoundingBox:
         else:
             return b_offset if b_offset > 0 else b_offset
 
-    def _intersects_yz(self, other: Self) -> bool:
+    def _intersects_yz(self, other: "BoundingBox") -> bool:
         return (
             self.min_y < other.max_y and self.max_y > other.min_y and
             self.min_z < other.max_z and self.max_z > other.min_z
         )
     
-    def _intersects_xz(self, other: Self) -> bool:
+    def _intersects_xz(self, other: "BoundingBox") -> bool:
         return (
             self.min_x < other.max_x and self.max_x > other.min_x and
             self.min_z < other.max_z and self.max_z > other.min_z
         )
     
-    def _intersects_xy(self, other: Self) -> bool:
+    def _intersects_xy(self, other: "BoundingBox") -> bool:
         return (
             self.min_x < other.max_x and self.max_x > other.min_x and
             self.min_y < other.max_y and self.max_y > other.min_y
